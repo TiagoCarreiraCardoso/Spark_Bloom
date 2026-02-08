@@ -1,0 +1,32 @@
+/* Therapy With You (TWY) – paleta do manual TWY_V8.pdf */
+:root {
+  --twy-strong-blue: #1D3668;
+  --twy-protective-purple: #4637BF;
+  --twy-energy-orange: #FF6F17;
+  --twy-warm-yellow: #FFD226;
+  --twy-peaceful-green: #22B867;
+  --twy-compassion-pink: #FFA4BD;
+  --twy-trust-blue: #74BAD2;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: #1a1b1e;
+  background: #fafbfc;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

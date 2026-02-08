@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Utente {
+  id                     String                @id @default(cuid())
+  codigo                 Int                   @unique
+  nome                   String
+  dataNascimento         DateTime
+  telemovel              String?
+  email                  String?
+  fotoUrl                String?
+
+  // Encarregados
+  nomePai                String?
+  telemovelPai           String?
+  emailPai               String?
+  moradaPai              String?
+  nomeMae                String?
+  telemovelMae           String?
+  emailMae               String?
+  moradaMae              String?
+
+  // Faturação
+  tipoEntidadeFaturacao  TipoEntidadeFaturacao
+  entidadeFaturacao      String?
+  moradaEntidadeFaturacao String?
+
+  // Processo
+  statusProcesso         StatusProcesso        @default(ATIVO)
+  dataAberturaFicha      DateTime              @default(now())
+  notas                  String?
+
+  // Relações
+  condicoes              CondicaoComercial[]
+  sessoes                Sessao[]
+
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  @@index([statusProcesso])
+  @@index([nome])
+  @@index([codigo])
+}
+
+model Artigo {
+  id        String   @id @default(cuid())
+  codigo    String   @unique
+  nome      String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  condicoes CondicaoComercial[]
+
+  @@index([codigo])
+  @@index([ativo])
+}
+
+model CondicaoComercial {
+  id             String    @id @default(cuid())
+  utenteId       String
+  utente         Utente    @relation(fields: [utenteId], references: [id], onDelete: Cascade)
+  artigoId       String?
+  artigo         Artigo?   @relation(fields: [artigoId], references: [id], onDelete: SetNull)
+  nomeArtigo     String?   @default("") // Mantido temporariamente para migração
+  precoCliente   Decimal   @db.Decimal(10, 2)
+  valorClinica   Decimal   @db.Decimal(10, 2)
+  valorTerapeuta Decimal   @db.Decimal(10, 2)
+  retencaoIRS    Decimal   @db.Decimal(5, 2) // percentagem
+  valorLiquido   Decimal   @db.Decimal(10, 2)
+  necessitaRecibo Boolean  @default(true)
+  inicioVigencia DateTime
+  fimVigencia    DateTime?
+
+  createdAt      DateTime  @default(now())
+
+  @@index([utenteId, inicioVigencia])
+  @@index([artigoId])
+  @@index([inicioVigencia, fimVigencia])
+}
+
+model Sessao {
+  id               String            @id @default(cuid())
+  utenteId         String
+  utente           Utente            @relation(fields: [utenteId], references: [id], onDelete: Cascade)
+  dataSessao       DateTime
+  estadoSessao     EstadoSessao      @default(PENDENTE)
+  estadoPagamento  EstadoPagamento   @default(NAO_PAGO)
+  dataPagamento    DateTime?
+  valorSessao      Decimal           @db.Decimal(10, 2)
+  valorTerapeuta   Decimal           @db.Decimal(10, 2)
+  retencaoIRS      Decimal           @db.Decimal(5, 2)
+  valorLiquido     Decimal           @db.Decimal(10, 2)
+  sujeitaRecibo    Boolean           @default(true)
+  numeroRecibo     String?
+  motivoRejeicao   String?
+
+  // Integração Outlook/Graph
+  outlookEventId   String?           @unique
+  outlookCalendar  String?
+
+  // Auditoria
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([utenteId])
+  @@index([dataSessao])
+  @@index([estadoSessao])
+  @@index([estadoPagamento])
+  @@index([outlookEventId])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      UserRole @default(TERAPEUTA)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+enum TipoEntidadeFaturacao {
+  PROPRIO
+  CLINICA
+}
+
+enum StatusProcesso {
+  ATIVO
+  INATIVO
+}
+
+enum EstadoSessao {
+  PENDENTE
+  CONFIRMADA
+  REJEITADA
+}
+
+enum EstadoPagamento {
+  PAGO
+  NAO_PAGO
+}
+
+enum UserRole {
+  ADMIN
+  TERAPEUTA
+  FINANCEIRO
+}
