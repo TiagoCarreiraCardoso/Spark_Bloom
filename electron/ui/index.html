@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spark & Bloom - Controlo do Servidor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌸 Spark & Bloom</h1>
+            <p class="subtitle">Sistema de Gestão de Sessões</p>
+        </header>
+
+        <div class="status-card">
+            <div class="status-header">
+                <h2>Estado do Servidor</h2>
+                <div id="status-indicator" class="status-indicator stopped">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Parado</span>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="btn-start" class="btn btn-primary">
+                    <span class="btn-icon">▶</span> Iniciar
+                </button>
+                <button id="btn-stop" class="btn btn-secondary" disabled>
+                    <span class="btn-icon">■</span> Parar
+                </button>
+                <button id="btn-restart" class="btn btn-secondary" disabled>
+                    <span class="btn-icon">↻</span> Reiniciar
+                </button>
+                <button id="btn-browser" class="btn btn-success" disabled>
+                    <span class="btn-icon">🌐</span> Abrir Navegador
+                </button>
+            </div>
+        </div>
+
+        <div class="logs-card">
+            <div class="logs-header">
+                <h3>Logs do Servidor</h3>
+                <button id="btn-clear-logs" class="btn-clear">Limpar</button>
+            </div>
+            <div id="logs-container" class="logs-container">
+                <div class="log-entry info">
+                    <span class="log-time">[Início]</span>
+                    <span class="log-message">Aguardando início do servidor...</span>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Porta padrão: <strong>3000</strong> | <a href="#" id="link-help">Ajuda</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        let serverStatus = 'stopped';
+
+        // Elementos da UI
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const btnStart = document.getElementById('btn-start');
+        const btnStop = document.getElementById('btn-stop');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnBrowser = document.getElementById('btn-browser');
+        const btnClearLogs = document.getElementById('btn-clear-logs');
+        const logsContainer = document.getElementById('logs-container');
+
+        // Atualiza o estado da UI
+        function updateUIState(status) {
+            serverStatus = status;
+            
+            // Remove todas as classes de estado
+            statusIndicator.classList.remove('stopped', 'starting', 'ready', 'error');
+            statusIndicator.classList.add(status);
+
+            // Atualiza texto e controles
+            switch (status) {
+                case 'starting':
+                    statusText.textContent = 'A Iniciar...';
+                    btnStart.disabled = true;
+                    btnStop.disabled = false;
+                    btnRestart.disabled = true;
+                    btnBrowser.disabled = true;
+                    break;
+                case 'ready':
+                    statusText.textContent = 'Online';
+                    btnStart.disabled = true;
+                    btnStop.disabled = false;
+                    btnRestart.disabled = false;
+                    btnBrowser.disabled = false;
+                    break;
+                case 'stopped':
+                    statusText.textContent = 'Parado';
+                    btnStart.disabled = false;
+                    btnStop.disabled = true;
+                    btnRestart.disabled = true;
+                    btnBrowser.disabled = true;
+                    break;
+                case 'error':
+                    statusText.textContent = 'Erro';
+                    btnStart.disabled = false;
+                    btnStop.disabled = false;
+                    btnRestart.disabled = false;
+                    btnBrowser.disabled = true;
+                    break;
+            }
+        }
+
+        // Adiciona mensagem ao log
+        function addLogMessage(type, message) {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            
+            const time = new Date().toLocaleTimeString('pt-PT');
+            logEntry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-message">${escapeHtml(message)}</span>
+            `;
+            
+            logsContainer.appendChild(logEntry);
+            
+            // Scroll automático para o fim
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+            
+            // Limita o número de logs
+            const logs = logsContainer.querySelectorAll('.log-entry');
+            if (logs.length > 100) {
+                logs[0].remove();
+            }
+        }
+
+        // Escapa HTML para prevenir XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event listeners dos botões
+        btnStart.addEventListener('click', async () => {
+            addLogMessage('info', 'A iniciar servidor...');
+            await window.electronAPI.startServer();
+        });
+
+        btnStop.addEventListener('click', async () => {
+            addLogMessage('info', 'A parar servidor...');
+            await window.electronAPI.stopServer();
+            updateUIState('stopped');
+        });
+
+        btnRestart.addEventListener('click', async () => {
+            addLogMessage('info', 'A reiniciar servidor...');
+            await window.electronAPI.restartServer();
+        });
+
+        btnBrowser.addEventListener('click', async () => {
+            addLogMessage('info', 'A abrir navegador...');
+            await window.electronAPI.openBrowser();
+        });
+
+        btnClearLogs.addEventListener('click', () => {
+            logsContainer.innerHTML = '';
+            addLogMessage('info', 'Logs limpos');
+        });
+
+        // Listeners de eventos do Electron
+        window.electronAPI.onServerStatus((data) => {
+            updateUIState(data.status);
+        });
+
+        window.electronAPI.onLogMessage((data) => {
+            addLogMessage(data.type, data.message);
+        });
+
+        // Link de ajuda
+        document.getElementById('link-help').addEventListener('click', (e) => {
+            e.preventDefault();
+            addLogMessage('info', 'Para ajuda, consulte a documentação em README.md');
+        });
+    </script>
+</body>
+</html>
