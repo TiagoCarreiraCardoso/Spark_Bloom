@@ -73,11 +73,14 @@ async function startServer() {
   }
 
   // Determina o diretório da aplicação
+  // appPath é sempre controlado pelo Electron, não por input do utilizador
   const appPath = app.isPackaged 
     ? path.join(process.resourcesPath, 'app')
     : path.join(__dirname, '..');
 
   // Inicia o servidor
+  // shell: true é necessário para npm no Windows, mas seguro porque
+  // appPath é controlado internamente pelo Electron
   serverProcess = spawn('npm', ['run', 'dev'], {
     cwd: appPath,
     shell: true,
