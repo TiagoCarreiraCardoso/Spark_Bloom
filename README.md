@@ -46,6 +46,27 @@ npm run dev
 
 A aplicação estará disponível em [http://localhost:3000](http://localhost:3000)
 
+### Com Aplicação Desktop (Windows)
+
+Para utilizadores do Windows, está disponível uma aplicação Desktop Electron que automatiza todo o processo de inicialização:
+
+```bash
+# Modo desenvolvimento
+npm run electron:dev
+
+# Criar executável Windows
+npm run electron:build
+```
+
+A aplicação Desktop oferece:
+- Inicialização automática do servidor
+- Painel de controlo visual com estado do servidor
+- Logs em tempo real
+- Botões para iniciar/parar/reiniciar o servidor
+- Abertura automática do navegador
+
+Para mais detalhes, consulte [electron/README.md](electron/README.md)
+
 ### Com Docker
 
 ```bash
@@ -142,14 +163,24 @@ npm run test:watch
 
 ## 📝 Scripts Disponíveis
 
+### Desenvolvimento e Produção
 - `npm run dev` - Servidor de desenvolvimento
 - `npm run build` - Build de produção
 - `npm run start` - Servidor de produção
+
+### Base de Dados
 - `npm run db:migrate` - Executar migrations
 - `npm run db:seed` - Popular banco de dados
 - `npm run db:studio` - Abrir Prisma Studio
+
+### Qualidade de Código
 - `npm run lint` - Verificar código
 - `npm run format` - Formatar código
+- `npm run test` - Executar testes
+
+### Aplicação Desktop
+- `npm run electron:dev` - Executar aplicação Electron em modo desenvolvimento
+- `npm run electron:build` - Criar executável Windows
 
 ## 🔒 Segurança
 
